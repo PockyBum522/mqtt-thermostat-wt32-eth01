@@ -30,4 +30,4 @@ add_custom_target(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_executable(Z_DUMMY_TARGET ${SRC_LIST} src/secrets.cpp)
+add_executable(Z_DUMMY_TARGET ${SRC_LIST} src/models/ThermostatReport.cpp src/models/ThermostatReport.h src/logic/MqttLogistics.cpp src/logic/MqttLogistics.h)
