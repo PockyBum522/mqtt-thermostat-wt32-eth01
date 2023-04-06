@@ -3,7 +3,8 @@
 #ifndef MQTT_THERMOSTAT_WT32_ETH01_THERMOSTATREPORT_H
 #define MQTT_THERMOSTAT_WT32_ETH01_THERMOSTATREPORT_H
 
-class ThermostatReport {
+class ThermostatReport
+{
     public:
         float CurrentTemperature{};
         float CurrentHumidity{};

@@ -3,49 +3,51 @@
 #include <AsyncTCP.h>                     // https://github.com/me-no-dev/AsyncTCP
 #include <ESPAsyncWebServer.h>            // https://github.com/me-no-dev/ESPAsyncWebServer
 #include <AsyncElegantOTA.h>              // https://github.com/ayushsharma82/AsyncElegantOTA
-#include <WEMOS_SHT3X.h>                  // https://github.com/wemos/WEMOS_SHT3x_Arduino_Library
-#include <PubSubClient.h>                 // PubSubClient - https://pubsubclient.knolleary.net/api
+#include <ArduinoJson.h>                 // PubSubClient - https://pubsubclient.knolleary.net/api
 #include "logic/MqttLogistics.h"
 #include "models/ThermostatReport.h"
-#include "secrets.cpp"
+#include "secrets.h"
 
-// Libraries also needed:
-//   ESPPubSubClientWrapper - https://github.com/knolleary/pubsubclient
+//#define _ETHERNET_WEBSERVER_LOGLEVEL_       3            // Debug Level from 0 to 4
 
 #define DEBUG_ETHERNET_WEBSERVER_PORT       Serial
-#define _ETHERNET_WEBSERVER_LOGLEVEL_       3            // Debug Level from 0 to 4
 #define USE_MOCK_SHT3X_VALUE                             // If defined, will fake temp/humidity readings and not need SHT3X sensor connected for testing
 
-const int seconds = 1000;
+#define SECONDS 1000
 
-unsigned long _secondsCompressorMustBeOff = 900 * seconds;
-const int _secondsBetweenPeripheralOutMessages = 15 * seconds;
+#define SECONDS_COMPRESSOR_TIMEOUT (900 * SECONDS)
+#define SECONDS_PERIPHERAL_MESSAGE_SEND_INTERVAL (15 * SECONDS)
 
-AsyncWebServer _server(80);
-SHT3X _sht30(0x45);
-
-// Board pins that control relays
 #define PIN_GREEN_FAN_CALL 4              // relayBoardIn01 =  IO4;
 #define PIN_WHITE_AUX_HEAT 12             // relayBoardIn03 = IO12;
 #define PIN_ORANGE_REVERSER_VALVE 14      // relayBoardIn04 = IO14;
 #define PIN_YELLOW_COMPRESSOR_CALL 15     // relayBoardIn05 = IO15;
 
-WiFiClient    _ethClient;
+unsigned long LastPeripheralOutMessageSentSeconds = 0;
+unsigned long LastCompressorOffSeconds = 0;                 // Set this when compressor turns off
 
-unsigned long _lastPeripheralOutMessageSentSeconds = 0;
-unsigned long _lastCompressorOffSeconds = 0;                 // Set this when compressor turns off
+float CurrentTemperatureFarenheit = 0.0;
+float CurrentHumidity = 0.0;
 
-float _currentTemperatureFarenheit = 0.0;
-float _currentHumidity = 0.0;
+unsigned long CurrentSeconds = 0;
+String CurrentThermostatMode = "Uninitialized";
 
-unsigned long _nowSeconds = 0;
-String _currentThermostatMode = "Uninitialized";
+char MqttMessageBuffer[150]; // Buffer for incoming MQTT message
 
-char _msg[150]; // Buffer for incoming MQTT message
+AsyncWebServer WebServer(80);
+WiFiClient EthernetClient;
 
-PubSubClient _client(SECRETS::MQTT_SERVER, 1883, MqttLogistics::callback, _ethClient);
+MqttLogistics mqttLogistics = *new MqttLogistics(EthernetClient);
 
 unsigned long lastMsg = 0;
+
+void reportTemperatureEveryTimeout(int response);
+
+void printSerialDebugMessages();
+
+String SerializeReportToSend(const ThermostatReport& report);
+
+int getShtRealOrMockValue();
 
 void setup()
 {
@@ -66,26 +68,26 @@ void setup()
     Serial.println(WEBSERVER_WT32_ETH01_VERSION);
 
     // To be called before ETH.begin()
-    WT32_ETH01_onEvent();
+    //WT32_ETH01_onEvent();
 
     ETH.begin(ETH_PHY_ADDR, ETH_PHY_POWER);
 
     // Static IP, leave without this line to get IP via DHCP
     // ETH.config(myIP, myGW, mySN, myDNS);
 
-    WT32_ETH01_waitForConnect();
+    //WT32_ETH01_waitForConnect();
 
     // Note - the default maximum packet size is 128 bytes. If the
     // combined length of clientId, username and password exceed this use the
     // following to increase the buffer size:
     // client.setBufferSize(255);
 
-    _server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    WebServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send(200, "text/plain", "Hi! I am WT32_ETH01_Thermostat.");
     });
 
-    AsyncElegantOTA.begin(&_server);    // Start ElegantOTA
-    _server.begin();
+    AsyncElegantOTA.begin(&WebServer);    // Start ElegantOTA
+    WebServer.begin();
 
     Serial.println();
     Serial.println("HTTP server started with MAC: " + ETH.macAddress() + ", at IPv4: " + ETH.localIP().toString());
@@ -94,19 +96,16 @@ void setup()
 
 void loop()
 {
-    _nowSeconds = millis() / seconds;
+    CurrentSeconds = millis() / SECONDS;
 
-    Serial.println(&"Now (seconds): " [ _nowSeconds]);
+    mqttLogistics.ReconnectMqttIfNotConnected();
 
-//    reconnectMqttIfNotConnected();
-//    yieldToMqttWork();
-//
-//    int shtResponse = getShtRealOrMockValue();
-//    reportTemperatureEveryTimeout(shtResponse);
-//
-//    printSerialDebugMessages();
-//
-//    handleCurrentThermostatMode();
+    int shtResponse = getShtRealOrMockValue();
+    reportTemperatureEveryTimeout(shtResponse);
+
+    printSerialDebugMessages();
+
+    delay(1000);
 }
 
 void handleCurrentThermostatMode()
@@ -207,49 +206,87 @@ void handleCurrentThermostatMode()
 
 void printSerialDebugMessages()
 {
-#ifdef DEBUG_MODE_ON
-    Serial.print("secondsSinceCompressorOff:\t");
-    Serial.print(_secondsSinceCompressorOff);
+    Serial.print("Now (seconds):\t");
+    Serial.print(CurrentSeconds);
 
-    Serial.print("_secondsUntilCompressorOn:\t");
-    Serial.println(_secondsUntilCompressorOn);
-#endif
+    Serial.print(" | LastCompressorOffSeconds:\t");
+    Serial.print(LastCompressorOffSeconds);
+
+    Serial.print(" | LastPeripheralOutMessageSentSeconds:\t");
+    Serial.print(LastPeripheralOutMessageSentSeconds);
+
+    unsigned long secondsSinceLastReportSent = CurrentSeconds - LastPeripheralOutMessageSentSeconds;
+
+    Serial.print(" | secondsSinceLastReportSent:\t");
+    Serial.print(secondsSinceLastReportSent);
+
+    Serial.println();
 }
 
 void reportTemperatureEveryTimeout(int shtResponse)
 {
-    unsigned long secondsSinceLastReportSent = _nowSeconds - _lastPeripheralOutMessageSentSeconds;
+    unsigned long secondsSinceLastReportSent = CurrentSeconds - LastPeripheralOutMessageSentSeconds;
 
-    unsigned long secondsSinceCompressorLastTurnoff = _nowSeconds - _lastCompressorOffSeconds;
-
-    if (secondsSinceLastReportSent > _secondsBetweenPeripheralOutMessages)
+    if (secondsSinceLastReportSent > 15)
     {
-        _lastPeripheralOutMessageSentSeconds = _nowSeconds;                 // Reset time since last message
+        LastPeripheralOutMessageSentSeconds = CurrentSeconds;                 // Reset time since last message
 
-        Serial.println(&"Sht30 response code: " [ shtResponse]);
+        //Serial.println("Sht30 response code: " [ shtResponse]);
 
         ThermostatReport reportToSend = *new ThermostatReport();
 
         if(shtResponse == 0)
         {
-            reportToSend.CurrentTemperature = _currentTemperatureFarenheit;
-            reportToSend.CurrentHumidity = _currentHumidity;
-            reportToSend.CompressorLastOffSeconds = _lastCompressorOffSeconds;
-            reportToSend.CurrentSeconds = _nowSeconds;
-            reportToSend.ThermostatMode = _currentThermostatMode;
+            reportToSend.CurrentTemperature = CurrentTemperatureFarenheit;
+            reportToSend.CurrentHumidity = CurrentHumidity;
+            reportToSend.CompressorLastOffSeconds = LastCompressorOffSeconds;
+            reportToSend.CurrentSeconds = CurrentSeconds;
+            reportToSend.ThermostatMode = CurrentThermostatMode;
         }
         else
         {
             reportToSend.ThermostatMode = "ERROR_TEMPERATURE_SENSOR";
         }
 
-        String outputJson;
-        //ArduinoJson::serializeJson(reportToSend, outputJson);
+        String outputJson = SerializeReportToSend(reportToSend);
 
-        _client.publish(_topicPubSub, outputJson.c_str(), sizeof(outputJson));
+        mqttLogistics.publish(SECRETS::TOPIC_PERIPHERAL_OUT, outputJson.c_str());
 
-        Serial.println("Sent report: " + outputJson);
+        Serial.print("Sent report: ");
+        Serial.println(outputJson);
     }
+}
+
+int getShtRealOrMockValue()
+{
+    int shtResponse = 0;
+
+#ifdef USE_MOCK_SHT30X_VALUE
+    CurrentTemperature = 1.2;
+    CurrentHumidity = 3.4;
+#else
+
+    //shtResponse = _sht30.get();
+#endif
+
+    return shtResponse;
+}
+
+String SerializeReportToSend(const ThermostatReport& reportToSend)
+{
+    StaticJsonDocument<456> jsonDocument;
+
+    jsonDocument["CurrentTemperature"] = reportToSend.CurrentTemperature;
+    jsonDocument["CurrentHumidity"] = reportToSend.CurrentHumidity;
+    jsonDocument["CompressorLastOffSeconds"] = reportToSend.CompressorLastOffSeconds;
+    jsonDocument["CurrentSeconds"] = reportToSend.CurrentSeconds;
+    jsonDocument["ThermostatMode"] = reportToSend.ThermostatMode;
+
+    String outputJson = "";
+
+    serializeJson(jsonDocument, outputJson);
+
+    return outputJson;
 }
 
 // void turnOnFan()

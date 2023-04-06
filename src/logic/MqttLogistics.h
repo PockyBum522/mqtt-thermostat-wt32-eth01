@@ -2,19 +2,25 @@
 #ifndef MQTT_THERMOSTAT_WT32_ETH01_MQTTLOGISTICS_H
 #define MQTT_THERMOSTAT_WT32_ETH01_MQTTLOGISTICS_H
 
-
 #include <Arduino.h>
+#include "PubSubClient.h"
 
 class MqttLogistics
 {
 public:
-    static void callback(char* topic, byte* payload, unsigned int length);
+    explicit MqttLogistics(const WiFiClient& ethernetClient);
 
-    static void reconnectMqttIfNotConnected();
+    void callback(char* topic, byte* payload, unsigned int length);
 
-    void yieldToMqttWork();
+    void ReconnectMqttIfNotConnected();
 
-    static void reconnect();
+    void reconnect();
+
+    void publish(const char *topic, const char *payload);
+
+private:
+    PubSubClient _mqttClient;
+
 };
 
 

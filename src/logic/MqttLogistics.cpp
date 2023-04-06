@@ -1,8 +1,13 @@
-//
-// Created by David on 4/6/2023.
-//
-
+#include <ETH.h>
+#include "SECRETS.h"
 #include "MqttLogistics.h"
+#include "PubSubClient.h"
+#include "WebServer_WT32_ETH01.h"
+
+MqttLogistics::MqttLogistics(const WiFiClient& ethernetClient)
+{
+    _mqttClient = *new PubSubClient(SECRETS::MQTT_SERVER, 1883, (Client &)ethernetClient);
+}
 
 void MqttLogistics::callback(char* topic, byte* payload, unsigned int length)
 {
@@ -22,53 +27,53 @@ void MqttLogistics::callback(char* topic, byte* payload, unsigned int length)
     if (payloadStr.equalsIgnoreCase(F("getInfoAllNodes")))
     {
         String messageToSend = String(SECRETS::MQTT_ID) + " is up at IPv4: " + ETH.localIP().toString();
-        _client.publish(_topicGetInfo, messageToSend.c_str());
+        _mqttClient.publish(SECRETS::TOPIC_GET_INFO_ALL, messageToSend.c_str());
     }
 }
 
-void MqttLogistics::reconnectMqttIfNotConnected()
+void MqttLogistics::ReconnectMqttIfNotConnected()
 {
-    if (!_client.connected())
+    if (!_mqttClient.connected())
     {
         reconnect();
     }
 }
 
-void MqttLogistics::yieldToMqttWork()
-{
-    _client.loop();
-}
-
 void MqttLogistics::reconnect()
 {
     // Loop until we're reconnected
-    while (!_client.connected())
+    while (!_mqttClient.connected())
     {
         Serial.print("Attempting MQTT connection to ");
-        Serial.print(_mqttServer);
+        Serial.print(SECRETS::MQTT_SERVER);
 
         // Attempt to connect
-        if (_client.connect("arduino", _mqttBrokerUser, _mqttBrokerPass))
+        if (_mqttClient.connect("arduino", SECRETS::MQTT_USER, SECRETS::MQTT_PASSWORD))
         {
             Serial.println("...connected");
 
             // Once connected, publish an announcement...
             String data = "Hello from WT32_ETH01_Thermostat on " + String(BOARD_NAME) + ", at IPv4: " + ETH.localIP().toString();
-            _client.publish(_topicPubSub, data.c_str());
+            _mqttClient.publish(SECRETS::TOPIC_GET_INFO_ALL, data.c_str());
 
             // ... and resubscribe
-            _client.subscribe(_topicPubSub);
-            _client.subscribe(_topicTempSet);
-            _client.subscribe(_topicGetInfo);
+            _mqttClient.subscribe(SECRETS::TOPIC_PERIPHERAL_OUT);
+            _mqttClient.subscribe(SECRETS::TOPIC_CONTROLLER_COMMANDS);
+            _mqttClient.subscribe(SECRETS::TOPIC_GET_INFO_ALL);
         }
         else
         {
             Serial.print("...failed, rc=");
-            Serial.print(client.state());
+            Serial.print(_mqttClient.state());
             Serial.println(" try again in 5 seconds");
 
             // Wait 5 seconds before retrying
             delay(5000);
         }
     }
+}
+
+void MqttLogistics::publish(const char* topic, const char* payload)
+{
+    _mqttClient.publish(topic, payload);
 }
