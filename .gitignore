@@ -1,4 +1,4 @@
 .pio
 CMakeListsPrivate.txt
 cmake-build-*/ 
-src/*secret*
+src/*secret*.cpp
