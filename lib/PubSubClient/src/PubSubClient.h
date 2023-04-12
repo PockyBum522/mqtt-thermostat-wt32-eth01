@@ -178,6 +178,7 @@ public:
    boolean connected();
    int state();
 
+    virtual void _callback(char *topic, byte *payload, unsigned int len);
 };
 
 

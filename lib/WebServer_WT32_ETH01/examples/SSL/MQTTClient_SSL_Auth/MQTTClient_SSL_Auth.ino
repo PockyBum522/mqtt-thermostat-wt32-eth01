@@ -167,7 +167,7 @@ void setup()
 String data = "Hello from MQTTClient_SSL_Auth on " + String(BOARD_NAME);
 const char *pubData = data.c_str();
 
-unsigned long lastMsg = 0;
+unsigned long LastMsg = 0;
 
 void loop()
 {
@@ -181,9 +181,9 @@ void loop()
   // Sending Data
   now = millis();
 
-  if (now - lastMsg > MQTT_PUBLISH_INTERVAL_MS)
+  if (now - LastMsg > MQTT_PUBLISH_INTERVAL_MS)
   {
-    lastMsg = now;
+      LastMsg = now;
 
     if (!client.publish(TOPIC, pubData))
     {

@@ -48,10 +48,10 @@ const char *ID        = "MQTTClient_SSL-Client";  // Name of our device, must be
 const char *TOPIC     = "MQTT_Pub";               // Topic to subcribe to
 const char *subTopic  = "MQTT_Sub";               // Topic to subcribe to
 
-unsigned long lastMsg = 0;
+unsigned long LastMsg = 0;
 
 // Initialize the SSL client library
-// Arguments: EthernetClient, our trust anchors
+// Arguments: ethernetClient, our trust anchors
 
 void callback(char* topic, byte* payload, unsigned int length)
 {
@@ -268,9 +268,9 @@ void loop()
   // Sending Data
   now = millis();
 
-  if (now - lastMsg > MQTT_PUBLISH_INTERVAL_MS)
+  if (now - LastMsg > MQTT_PUBLISH_INTERVAL_MS)
   {
-    lastMsg = now;
+      LastMsg = now;
 
     if (!client->publish(TOPIC, pubData))
     {
@@ -298,9 +298,9 @@ void loop()
   // Sending Data
   now = millis();
 
-  if (now - lastMsg > MQTT_PUBLISH_INTERVAL_MS)
+  if (now - LastMsg > MQTT_PUBLISH_INTERVAL_MS)
   {
-    lastMsg = now;
+    LastMsg = now;
 
     if (!client.publish(TOPIC, pubData))
     {

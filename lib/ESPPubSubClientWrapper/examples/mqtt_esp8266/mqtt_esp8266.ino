@@ -32,7 +32,7 @@ const char* password = "..........";
 const char* mqtt_server = "broker.mqtt-dashboard.com";
 
 ESPPubSubClientWrapper client(mqtt_server);
-long lastMsg = 0;
+long LastMsg = 0;
 char msg[50];
 int value = 0;
 
@@ -70,7 +70,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void connectSuccess(uint16_t count) {
   Serial.println("Connected to MQTT-Broker!\nThis is connection nb: ");
   Serial.println(count);
-  lastMsg = millis();
+    LastMsg = millis();
   client.publish("outTopic", "hello world");
 }
 
@@ -92,8 +92,8 @@ void loop() {
 
   long now = millis();
   if (client.connected())
-    if (now - lastMsg > 2000) {
-      lastMsg = now;
+    if (now - LastMsg > 2000) {
+        LastMsg = now;
       ++value;
       snprintf (msg, 50, "hello world #%ld", value);
       Serial.print("Publish message: ");

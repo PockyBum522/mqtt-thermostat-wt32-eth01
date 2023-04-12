@@ -25,3 +25,13 @@ Functions:
 Can you switch the reversing valve while the compressor is running? Yes. Should you? Maybe not, but sounds like companies do it anyway.
 
 Does the thermostat handle the defrost cycle or is it automatically handled by the outdoor unit? Outdoor handles.
+
+
+
+
+
+
+I2C From temperature sensor:
+// SDA = Green
+// SCL = Blue
+// (At 4 pin connector header.)

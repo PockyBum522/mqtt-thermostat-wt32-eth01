@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Exclude Libraries" pattern="(file[mqtt-thermostat-wt32-eth01]:src/*||file[mqtt-thermostat-wt32-eth01]:src//*)&amp;&amp;!file:src/secrets/SECRETS.cpp" />
+</component>

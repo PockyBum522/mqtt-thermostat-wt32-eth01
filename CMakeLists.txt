@@ -30,4 +30,4 @@ add_custom_target(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_executable(Z_DUMMY_TARGET ${SRC_LIST})
+add_executable(Z_DUMMY_TARGET ${SRC_LIST} src/models/PinDefinitions.h src/models/PinDefinitions.h src/models/CurrentThermostatStatus/CurrentThermostatStatus.cpp src/models/CurrentThermostatStatus/CurrentThermostatStatus.h src/logic/TemperatureReporter.cpp src/logic/TemperatureReporter.h src/logic/DebugMessageSender.cpp src/logic/DebugMessageSender.h src/models/CurrentThermostatStatus/CurrentThermostatSettings.h src/models/Enums/ThermostatModeEnum.h src/logic/ThermostatModeHandlers/ThermostatModeHandler.cpp src/logic/ThermostatModeHandlers/ThermostatModeHandler.h src/models/Enums/FanModeEnum.h src/logic/ThermostatModeHandlers/FanModeHandler.cpp src/logic/ThermostatModeHandlers/FanModeHandler.h)

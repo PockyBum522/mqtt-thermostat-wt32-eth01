@@ -26,7 +26,7 @@ TEST_CASE("Round Trip: parse -> prettyPrint -> parse -> print") {
         "8166,\"message\":0.1222,\"country\":\"AU\",\"sunrise\":1414784325,"
         "\"sunset\":1414830137},\"weather\":[{\"id\":801,\"main\":\"Clouds\","
         "\"description\":\"few clouds\",\"icon\":\"02n\"}],\"base\":\"cmc "
-        "stations\",\"main\":{\"temp\":296.15,\"pressure\":1014,\"humidity\":"
+        "stations\",\"main\":{\"temp\":296.15,\"pressure\":1014,\"Humidity\":"
         "83,\"temp_min\":296.15,\"temp_max\":296.15},\"wind\":{\"speed\":2.22,"
         "\"deg\":114.501},\"clouds\":{\"all\":20},\"dt\":1414846800,\"id\":"
         "2172797,\"name\":\"Cairns\",\"cod\":200}");

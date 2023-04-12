@@ -1,27 +1,33 @@
 
-#ifndef MQTT_THERMOSTAT_WT32_ETH01_MQTTLOGISTICS_H
-#define MQTT_THERMOSTAT_WT32_ETH01_MQTTLOGISTICS_H
+#ifndef MQTT_THERMOSTAT_WT32_ETH01_MQTT_LOGISTICS_H
+#define MQTT_THERMOSTAT_WT32_ETH01_MQTT_LOGISTICS_H
 
 #include <Arduino.h>
 #include "PubSubClient.h"
+#include "models/CurrentThermostatStatus/CurrentThermostatStatus.h"
 
 class MqttLogistics
 {
 public:
-    explicit MqttLogistics(const WiFiClient& ethernetClient);
+    explicit MqttLogistics(CurrentThermostatStatus* currentThermostatStatus, WiFiClient* client);
 
-    void callback(char* topic, byte* payload, unsigned int length);
+    void onMqttMessageReceived(char* topic, uint8_t* payload, unsigned int length);
 
-    void ReconnectMqttIfNotConnected();
-
-    void reconnect();
+    void reconnectMqttIfNotConnected();
 
     void publish(const char *topic, const char *payload);
 
+    void loopClient();
+
+    std::string getLastCommand();
+
 private:
-    PubSubClient _mqttClient;
+    CurrentThermostatStatus* _currentThermostatStatus;
+    WiFiClient* _ethernetClient;
+    PubSubClient* _mqttClient;
+
+    std::string _lastCommand;
 
 };
 
-
-#endif //MQTT_THERMOSTAT_WT32_ETH01_MQTTLOGISTICS_H
+#endif //MQTT_THERMOSTAT_WT32_ETH01_MQTT_LOGISTICS_H

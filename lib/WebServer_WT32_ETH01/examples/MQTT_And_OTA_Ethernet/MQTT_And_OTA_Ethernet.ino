@@ -156,7 +156,7 @@ void reconnect()
 
 #define MQTT_PUBLISH_INTERVAL_MS       5000L
 
-unsigned long lastMsg = 0;
+unsigned long LastMsg = 0;
 
 void loop()
 {
@@ -173,9 +173,9 @@ void loop()
   // Sending Data
   now = millis();
 
-  if (now - lastMsg > MQTT_PUBLISH_INTERVAL_MS)
+  if (now - LastMsg > MQTT_PUBLISH_INTERVAL_MS)
   {
-    lastMsg = now;
+      LastMsg = now;
 
     if (!client.publish(TOPIC, pubData))
     {

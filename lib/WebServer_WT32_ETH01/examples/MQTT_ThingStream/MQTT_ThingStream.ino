@@ -81,10 +81,10 @@ void mqtt_receive_callback(char* topic, byte* payload, unsigned int length);
 
 const int   MQTT_PORT           = 1883; //if you use SSL //1883 no SSL
 
-unsigned long lastMsg = 0;
+unsigned long LastMsg = 0;
 
 // Initialize the SSL client library
-// Arguments: EthernetClient, our trust anchors
+// Arguments: ethernetClient, our trust anchors
 
 
 WiFiClient ethClient;
@@ -214,9 +214,9 @@ void loop()
   // Sending Data
   now = millis();
 
-  if (now - lastMsg > MQTT_PUBLISH_INTERVAL_MS)
+  if (now - LastMsg > MQTT_PUBLISH_INTERVAL_MS)
   {
-    lastMsg = now;
+      LastMsg = now;
 
     if (!client.publish(topic.c_str(), pubData))
     {
