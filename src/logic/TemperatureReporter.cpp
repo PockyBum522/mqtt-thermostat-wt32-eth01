@@ -43,21 +43,16 @@ std::string TemperatureReporter::SerializeReport()
     humidityStream << std::fixed << std::setprecision(2) << TemperatureReporter::_currentThermostatStatus->CurrentHumidity;
     std::string outHumidityString = humidityStream.str();
 
-    std::string currentThermostatModeToString = ConvertCurrentThermostatModeToString(TemperatureReporter::_currentThermostatStatus->CurrentThermostatMode);
-    std::string currentFanModeToString = ConvertCurrentFanModeToString(TemperatureReporter::_currentThermostatStatus->CurrentFanMode);
-
     jsonDocument["CurrentTemperatureFahrenheit"] = outTemperatureString;
     jsonDocument["CurrentHumidity"] = outHumidityString;
 
-    jsonDocument["ThermostatMode"] = currentThermostatModeToString;
-    jsonDocument["FanMode"] = currentFanModeToString;
-
-    unsigned long lastCompressorOffAtSeconds = _currentThermostatStatus->LastCompressorOffAtSeconds;
-    unsigned long currentSeconds = _currentThermostatStatus->CurrentSeconds;
-    jsonDocument["CompressorOnInSeconds"] = currentSeconds - lastCompressorOffAtSeconds;
-
-    jsonDocument["CurrentSeconds"] = TemperatureReporter::_currentThermostatStatus->CurrentSeconds;
     jsonDocument["CurrentSetpoint"] = TemperatureReporter::_currentThermostatStatus->CurrentSetpoint;
+
+    jsonDocument["ThermostatMode"] = getThermostatModeAsString(_currentThermostatStatus->ThermostatMode);
+    jsonDocument["FanMode"] = getFanModeAsString(_currentThermostatStatus->FanMode);
+
+    jsonDocument["CompressorDelayIfNegative"] = (long)((long)_currentThermostatStatus->CurrentSeconds - (long)_currentThermostatStatus->LastCompressorOffAtSeconds) - (long)_currentThermostatStatus->CurrentSettings.CompressorTimeoutSeconds;
+    jsonDocument["CurrentSeconds"] = TemperatureReporter::_currentThermostatStatus->CurrentSeconds;
 
     std::string outputJson;
 
@@ -66,45 +61,45 @@ std::string TemperatureReporter::SerializeReport()
     return outputJson;
 }
 
-std::string TemperatureReporter::ConvertCurrentThermostatModeToString(ThermostatModeEnum currentThermostatMode)
+String TemperatureReporter::getThermostatModeAsString(ThermostatModeStates thermostatMode)
 {
-    switch (currentThermostatMode)
+    switch (thermostatMode)
     {
-        case ThermostatUninitialized:
+        case ModeUninitialized:
             return "Uninitialized";
 
-        case ThermostatCool:
-            return "Cool";
-
-        case ThermostatHeat:
-            return "Heat";
-
-        case ThermostatEmergencyHeat:
-            return "Emergency Heat";
-
-        case ThermostatMaintainRange:
-            return "Maintain Range";
-
-        case ThermostatOff:
+        case ModeOff:
             return "Off";
 
-        case ErrorSensorTemperatureProblem:
-            return "ERROR: TEMPERATURE SENSOR COMMUNICATION PROBLEM";
+        case ModeCooling:
+            return "Cooling";
 
+        case ModeMaintainingRange:
+            return "Maintaining Range";
+
+        case ModeHeating:
+            return "Heating";
     }
+
+    return "ERROR";
 }
 
-std::string TemperatureReporter::ConvertCurrentFanModeToString(FanModeEnum currentFanMode)
+String TemperatureReporter::getFanModeAsString(FanStates fanMode)
 {
-    switch (currentFanMode)
+    switch (fanMode)
     {
         case FanUninitialized:
             return "Uninitialized";
 
-        case FanOff:
-            return "Off";
+        case FanAlwaysOn:
+            return "Always On";
 
-        case FanOn:
-            return "On";
+        case FanOnAutomatically:
+            return "Automatic";
+
+        case FanAlwaysOff:
+            return "Always Off";
     }
+
+    return "ERROR";
 }

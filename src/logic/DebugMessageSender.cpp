@@ -20,16 +20,17 @@ void DebugMessageSender::SendMqttDebugMessagesEveryTimeout()
 
         StaticJsonDocument<356> jsonDocument;
 
-        jsonDocument["CurrentSeconds"] = DebugMessageSender::_currentThermostatStatus->CurrentSeconds;
+        jsonDocument["CurrentSeconds"] = _currentThermostatStatus->CurrentSeconds;
+        jsonDocument["LastCompressorOffAtSeconds"] = _currentThermostatStatus->LastCompressorOffAtSeconds;
+        jsonDocument["CompressorDelayIfNegative"] = (long)((long)_currentThermostatStatus->CurrentSeconds - (long)_currentThermostatStatus->LastCompressorOffAtSeconds) - (long)_currentThermostatStatus->CurrentSettings.CompressorTimeoutSeconds;
+        jsonDocument["secondsSinceLastDebugMessageSent"] = secondsSinceLastDebugMessageSent;
 
         jsonDocument["LastSeenMqttCommand"] = _mqttLogistics->getLastCommand();
 
-        jsonDocument["secondsSinceLastDebugMessageSent"] = secondsSinceLastDebugMessageSent;
-
-        jsonDocument["Relay01Status"] = !digitalRead(PIN_RELAY_01);
-        jsonDocument["Relay02Status"] = !digitalRead(PIN_RELAY_02);
-        jsonDocument["Relay03Status"] = !digitalRead(PIN_RELAY_03);
-        jsonDocument["Relay04Status"] = !digitalRead(PIN_RELAY_04);
+        jsonDocument["PinCompressorStatus"] = !digitalRead(PIN_YELLOW_COMPRESSOR_CALL);
+        jsonDocument["PinFanStatus"] = !digitalRead(PIN_GREEN_FAN_CALL);
+        jsonDocument["PinReverserValveStatus"] = !digitalRead(PIN_ORANGE_REVERSER_VALVE);
+        jsonDocument["PinAuxHeatStatus"] = !digitalRead(PIN_WHITE_AUX_HEAT);
         jsonDocument["Relay05Status"] = !digitalRead(PIN_RELAY_05);
         jsonDocument["Relay06Status"] = !digitalRead(PIN_RELAY_06);
 

@@ -21,9 +21,8 @@ private:
 
     std::string SerializeReport();
 
-    static std::string ConvertCurrentThermostatModeToString(ThermostatModeEnum currentThermostatMode);
-
-    static std::string ConvertCurrentFanModeToString(FanModeEnum fanEnum);
+    String getThermostatModeAsString(ThermostatModeStates thermostatMode);
+    String getFanModeAsString(FanStates thermostatMode);
 };
 
 

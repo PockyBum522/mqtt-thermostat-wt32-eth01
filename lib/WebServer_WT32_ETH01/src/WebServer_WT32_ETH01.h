@@ -57,7 +57,7 @@
 #define WEBSERVER_WT32_ETH01_VERSION_INT      1005001
 
 #if ESP32
-  #warning Using ESP32 architecture for WebServer_WT32_ETH01
+  //#warning Using ESP32 architecture for WebServer_WT32_ETH01
   #define BOARD_NAME      "WT32-ETH01"
 #else
   #error This code is designed to run on ESP32 platform! Please check your Tools->Board setting.

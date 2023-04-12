@@ -1,17 +1,16 @@
 #include <ETH.h>
 #include "secrets/SECRETS.h"
-#include "models/PinDefinitions.h"
 #include "MqttLogistics.h"
 
-MqttLogistics::MqttLogistics(CurrentThermostatStatus* currentThermostatStatus,
-                             WiFiClient* client)
+MqttLogistics::MqttLogistics(CurrentThermostatStatus *currentThermostatStatus,
+                             WiFiClient *client)
 {
     _ethernetClient = client;
     _currentThermostatStatus = currentThermostatStatus;
 
     _mqttClient = new PubSubClient();
 
-    _mqttClient->setClient((Client&)_ethernetClient);
+    _mqttClient->setClient(*_ethernetClient);
     _mqttClient->setServer(SECRETS::MQTT_SERVER, 1883);
     _mqttClient->setBufferSize(512);
 
@@ -21,30 +20,8 @@ MqttLogistics::MqttLogistics(CurrentThermostatStatus* currentThermostatStatus,
 void MqttLogistics::onMqttMessageReceived(char* topic, uint8_t* payload, unsigned int length)
 {
     // A lot of the arduino string functions are really useful, so we'll use it here
-    String payloadStr = "";
-    String topicStr = "";
-
-    Serial.print("Message arrived [");
-    Serial.print(topic);
-    Serial.print("] ");
-    Serial.println();
-
-    // Convert payload to string
-    for (int i = 0; i < length; i++)
-    {
-        payloadStr += ((char)payload[i]);
-    }
-
-    Serial.print("Payload is [");
-    Serial.print(payloadStr);
-    Serial.print("] ");
-    Serial.println();
-
-    // Convert topic to string
-    for (int i = 0; i < strlen(topic); i++)
-    {
-        topicStr += ((char)topic[i]);
-    }
+    String topicStr = getIncomingTopicAsString(topic);
+    String payloadStr = getIncomingPayloadAsString(payload, length);
 
     // Handle getInfoAllNodes request
     if (payloadStr.equalsIgnoreCase(F("getInfoAllNodes")))
@@ -55,55 +32,60 @@ void MqttLogistics::onMqttMessageReceived(char* topic, uint8_t* payload, unsigne
         MqttLogistics::_mqttClient->publish(SECRETS::TOPIC_GET_INFO_ALL, messageToSend.c_str());
     }
 
-    Serial.print("topicStr: ");
-    Serial.println(topicStr);
+    // If message isn't coming in on the commands topic, we don't care
+    if (!topicStr.equalsIgnoreCase(SECRETS::TOPIC_CONTROLLER_COMMANDS))
+        return;
 
-    Serial.print("SECRETS::TOPIC_CONTROLLER_COMMANDS:");
-    Serial.println(SECRETS::TOPIC_CONTROLLER_COMMANDS);
+    // Change thermostat mode
+    if (payloadStr.startsWith("SET_MODE_"))
+        setThermostatMode(payloadStr);
 
-    Serial.println(topicStr.equalsIgnoreCase(SECRETS::TOPIC_CONTROLLER_COMMANDS));
-    Serial.println(payloadStr.startsWith("RELAY_"));
+    // Change thermostat setpoint
+    if (payloadStr.startsWith("SET_SETPOINT_"))
+        setThermostatSetpoint(payloadStr);
 
-    if (topicStr.equalsIgnoreCase(SECRETS::TOPIC_CONTROLLER_COMMANDS) &&
-        payloadStr.startsWith("RELAY_"))
+}
+
+void MqttLogistics::setThermostatSetpoint(String commandString)
+{
+    std::string setpointString;
+
+    for (int i = 13; i < commandString.length(); i++)
+        setpointString += commandString[i];
+
+    float setpointFloat = std::stof(setpointString);
+
+    _currentThermostatStatus->CurrentSetpoint = setpointFloat;
+}
+
+void MqttLogistics::setThermostatMode(const String &payloadStr)
+{
+    _lastCommand = payloadStr.c_str();
+
+    if (payloadStr.endsWith("COOL"))
     {
-        _lastCommand = payloadStr.c_str();
-
-        int pinToUse = 0;
-        bool newPinState;
-
-        Serial.println("Payload startsWith valid...");
-
-        // Check what relay number, formatted as RELAY_01_ON or RELAY_02_OFF, etc...
-        if (payloadStr[7] == '1')
-            pinToUse = PIN_RELAY_01;
-
-        if (payloadStr[7] == '2')
-            pinToUse = PIN_RELAY_02;
-
-        if (payloadStr[7] == '3')
-            pinToUse = PIN_RELAY_03;
-
-        if (payloadStr[7] == '4')
-            pinToUse = PIN_RELAY_04;
-
-        if (payloadStr[7] == '5')
-            pinToUse = PIN_RELAY_05;
-
-        if (payloadStr[7] == '6')
-            pinToUse = PIN_RELAY_06;
-
-        if (payloadStr.endsWith("ON"))
-            newPinState = false; // ESP32 low = pin on
-
-        if (payloadStr.endsWith("OFF"))
-            newPinState = true; // ESP32 high = pin off
-
-        digitalWrite(pinToUse, newPinState);
-
-        String messageToSend = "Setting pin: " + String(pinToUse) + " to new state: " + String(newPinState);
-        MqttLogistics::_mqttClient->publish(SECRETS::TOPIC_DEBUG_OUT, messageToSend.c_str());
-        _lastCommand = payloadStr.c_str();
+        _currentThermostatStatus->ThermostatMode = ModeCooling;
+    }
+    else if (payloadStr.endsWith("MAINTAIN"))
+    {
+        _currentThermostatStatus->ThermostatMode = ModeMaintainingRange;
+    }
+    else if (payloadStr.endsWith("NORMAL_HEAT"))
+    {
+        _currentThermostatStatus->ThermostatMode = ModeHeating;
+    }
+    else if (payloadStr.endsWith("FAN_ONLY_ON"))
+    {
+        _currentThermostatStatus->FanMode = FanAlwaysOn;
+    }
+    else if (payloadStr.endsWith("FAN_AUTO_ON"))
+    {
+        _currentThermostatStatus->FanMode = FanOnAutomatically;
+    }
+    else if (payloadStr.endsWith("OFF"))
+    {
+        _currentThermostatStatus->ThermostatMode = ModeOff;
+        _currentThermostatStatus->FanMode = FanOnAutomatically;
     }
 }
 
@@ -156,4 +138,40 @@ void MqttLogistics::loopClient()
 std::string MqttLogistics::getLastCommand()
 {
     return _lastCommand;
+}
+
+String MqttLogistics::getIncomingPayloadAsString(uint8_t *payload, unsigned int payloadLength)
+{
+    String payloadStr = "";
+
+    // Convert payload to string
+    for (int i = 0; i < payloadLength; i++)
+    {
+        payloadStr += ((char)payload[i]);
+    }
+
+    Serial.print("Payload is [");
+    Serial.print(payloadStr);
+    Serial.print("] ");
+    Serial.println();
+
+    return payloadStr;
+}
+
+String MqttLogistics::getIncomingTopicAsString(char *topic)
+{
+    String topicStr = "";
+
+    // Convert topic to string
+    for (int i = 0; i < strlen(topic); i++)
+    {
+        topicStr += ((char)topic[i]);
+    }
+
+    Serial.print("Topic is [");
+    Serial.print(topicStr);
+    Serial.print("] ");
+    Serial.println();
+
+    return topicStr;
 }

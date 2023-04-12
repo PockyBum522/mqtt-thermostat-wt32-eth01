@@ -1,39 +1,30 @@
 #ifndef MQTT_THERMOSTAT_WT32_ETH01_CURRENT_THERMOSTAT_STATUS_H
 #define MQTT_THERMOSTAT_WT32_ETH01_CURRENT_THERMOSTAT_STATUS_H
 
-// If defined, will fake temp/Humidity readings and not need Sht3xHandler sensor connected for testing
-//#define USE_MOCK_SHT3X_VALUE
-
 #define SECONDS 1000
 
-#include "logic/Sht3xHandler.h"
+#include "models/StateEnums/FanStates.h"
+#include "models/StateEnums/ObservedTemperatureStates.h"
+#include "models/StateEnums/ThermostatModeStates.h"
+
 #include "CurrentThermostatSettings.h"
-#include "models/Enums/ThermostatModeEnum.h"
-#include "models/Enums/FanModeEnum.h"
-#include "models/PinDefinitions.h"
-#include "models/Enums/ThermostatInternalModeEnum.h"
 
 class CurrentThermostatStatus
 {
 public:
+    ThermostatModeStates ThermostatMode = ModeUninitialized;
+    FanStates FanMode = FanUninitialized;
 
     CurrentThermostatSettings CurrentSettings = *new CurrentThermostatSettings();
 
     unsigned long CurrentSeconds = 0;
-
     unsigned long LastCompressorOffAtSeconds = 0;                          // This gets set to CurrentSeconds when compressor turns off
-    ThermostatModeEnum CurrentThermostatMode = ThermostatUninitialized;
-    FanModeEnum CurrentFanMode = FanUninitialized;
 
-    ThermostatInternalModeEnum ThermostatInternalMode = InternalUninitialized;
-
-    bool CurrentReverserValveState = STATE_OFF;
-    bool CurrentCompressorState = STATE_OFF;
-    bool CurrentFanState = STATE_OFF;
+    bool CompressorQueuedToTurnOn = false;
 
     float CurrentTemperatureFahrenheit = 0.0;
     float CurrentHumidity = 0.0;
-    float CurrentSetpoint = 0.0;
+    float CurrentSetpoint = 71.0; // Default to something comfortable in case of brownout
 
 };
 

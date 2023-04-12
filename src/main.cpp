@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <WiFiClient.h>
 #include <WebServer_WT32_ETH01.h>         // https://github.com/khoih-prog/WebServer_WT32_ETH01/
 #include <ESPAsyncWebServer.h>            // https://github.com/me-no-dev/ESPAsyncWebServer
 #include <AsyncElegantOTA.h>              // https://github.com/ayushsharma82/AsyncElegantOTA
@@ -7,14 +8,13 @@
 #include <sstream>
 #include "models/CurrentThermostatStatus/CurrentThermostatStatus.h"
 #include "logic/MqttLogistics.h"
-#include "models/ThermostatReport.h"
 #include "models/PinDefinitions.h"
 #include "secrets/SECRETS.h"
 #include "logic/TemperatureReporter.h"
 #include "logic/DebugMessageSender.h"
-#include "logic/ThermostatModeHandlers/ThermostatModeHandler.h"
+#include "logic/ThermostatStateMachine.h"
 
-#define DEBUG_ETHERNET_WEBSERVER_PORT       Serial
+#define DEBUG_ETHERNET_WEBSERVER_PORT Serial
 
 AsyncWebServer webServer(80);
 WiFiClient ethernetClient;
@@ -23,10 +23,11 @@ CurrentThermostatStatus currentStatus = *new CurrentThermostatStatus();
 
 MqttLogistics mqttLogistics = *new MqttLogistics(&currentStatus, &ethernetClient);
 
-TemperatureReporter temperatureReportSender = *new TemperatureReporter(&currentStatus, &mqttLogistics);
-DebugMessageSender debugMqttSender = *new DebugMessageSender(&currentStatus, &mqttLogistics);
-Sht3xHandler temperatureSensorHandler = *new Sht3xHandler(&currentStatus);
-ThermostatModeHandler thermostatModeHandler = *new ThermostatModeHandler(&currentStatus);
+auto temperatureReportSender = *new TemperatureReporter(&currentStatus, &mqttLogistics);
+auto debugMqttSender = *new DebugMessageSender(&currentStatus, &mqttLogistics);
+auto temperatureSensorHandler = *new Sht3xHandler(&currentStatus);
+auto hvacController = *new HvacController(&currentStatus, &mqttLogistics);
+auto thermostatStateMachine = *new ThermostatStateMachine(&currentStatus, &hvacController, &mqttLogistics);
 
 void setup()
 {
@@ -76,7 +77,8 @@ void loop()
     mqttLogistics.reconnectMqttIfNotConnected();
     mqttLogistics.loopClient();
 
-    thermostatModeHandler.handleCurrentMode();
+    thermostatStateMachine.loop();
+    hvacController.loopForQueuedCompressorHandling();
 
     temperatureReportSender.SendTemperatureReportEveryTimeout();
     debugMqttSender.SendMqttDebugMessagesEveryTimeout();

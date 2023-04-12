@@ -31,7 +31,7 @@ void Sht3xHandler::SetCurrentStatusOrError(int shtResponse)
     }
     else
     {
-        _currentThermostatStatus->CurrentThermostatMode = ErrorSensorTemperatureProblem;
+        //_currentThermostatStatus-> = ErrorSensorTemperatureProblem;
     }
 }
 

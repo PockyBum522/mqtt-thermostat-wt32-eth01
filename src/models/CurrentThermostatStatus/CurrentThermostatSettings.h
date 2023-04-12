@@ -9,15 +9,12 @@
 class CurrentThermostatSettings
 {
 public:
-    // TODO: CHANGE THIS TO 900 WHEN USING FOR REAL
-    const int CompressorTimeoutSeconds = 20;
+    const int CompressorTimeoutSeconds = 900;
     const int DebugMessageSendIntervalSeconds = 3;
     const int TemperatureReportMessageSendIntervalSeconds = 5;
 
     // How far to overshoot the setpoint/let the temp get back to when the house returns and goes past setpoint the other direction
     const float MarginFahrenheit = 0.75;
-
-    const int ModeCheckIntervalSeconds = 60;
 
     const bool DebugModeOn = false;
     const bool UseMockTemperatureSensorData = false;

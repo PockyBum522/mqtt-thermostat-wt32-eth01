@@ -1,8 +1,6 @@
 #ifndef AsyncElegantOTA_h
 #define AsyncElegantOTA_h
 
-#warning AsyncElegantOTA.loop(); is deprecated, please remove it from loop() if defined. This function will be removed in a future release.
-
 #include "Arduino.h"
 #include "stdlib_noniso.h"
 

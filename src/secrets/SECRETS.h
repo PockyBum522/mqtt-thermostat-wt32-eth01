@@ -18,6 +18,7 @@ public:
 
     static const char *TOPIC_GET_INFO_ALL;
     static const char *TOPIC_DEBUG_OUT;
+    static const char *TOPIC_DEBUG_STATE_MACHINE;
 
 };
 
