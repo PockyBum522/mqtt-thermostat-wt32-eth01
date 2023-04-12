@@ -16,6 +16,8 @@
 
 #define DEBUG_ETHERNET_WEBSERVER_PORT Serial
 
+bool initialSettingsSet = false;
+
 AsyncWebServer webServer(80);
 WiFiClient ethernetClient;
 
@@ -28,6 +30,8 @@ auto debugMqttSender = *new DebugMessageSender(&currentStatus, &mqttLogistics);
 auto temperatureSensorHandler = *new Sht3xHandler(&currentStatus);
 auto hvacController = *new HvacController(&currentStatus, &mqttLogistics);
 auto thermostatStateMachine = *new ThermostatStateMachine(&currentStatus, &hvacController, &mqttLogistics);
+
+void setInitialSettingsAfterDelay();
 
 void setup()
 {
@@ -82,4 +86,18 @@ void loop()
 
     temperatureReportSender.SendTemperatureReportEveryTimeout();
     debugMqttSender.SendMqttDebugMessagesEveryTimeout();
+
+    setInitialSettingsAfterDelay(); // Fires once after 30 seconds to set sane settings after brownouts
+}
+
+void setInitialSettingsAfterDelay()
+{
+    if (!(millis() > 30000 && !initialSettingsSet))
+        return;
+
+    initialSettingsSet = true;
+
+    currentStatus.ThermostatMode = ModeCooling;
+    currentStatus.FanMode = FanOnAutomatically;
+    currentStatus.CurrentSetpoint = 71.0;
 }

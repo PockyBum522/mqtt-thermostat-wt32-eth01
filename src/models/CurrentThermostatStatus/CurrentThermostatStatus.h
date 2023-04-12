@@ -24,7 +24,7 @@ public:
 
     float CurrentTemperatureFahrenheit = 0.0;
     float CurrentHumidity = 0.0;
-    float CurrentSetpoint = 71.0; // Default to something comfortable in case of brownout
+    float CurrentSetpoint = 0.0; // Default to something comfortable in case of brownout
 
 };
 
