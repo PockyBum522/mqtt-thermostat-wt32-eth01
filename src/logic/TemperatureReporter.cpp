@@ -4,6 +4,7 @@
 #include "MqttLogistics.h"
 #include "secrets/SECRETS.h"
 #include "../../lib/ArduinoJson-6.x/src/ArduinoJson/Document/StaticJsonDocument.hpp"
+#include "ConvertersToString.h"
 
 TemperatureReporter::TemperatureReporter(CurrentThermostatStatus* currentThermostatStatus,
                                          MqttLogistics* mqttLogistics)
@@ -27,7 +28,7 @@ void TemperatureReporter::SendTemperatureReportEveryTimeout()
         char temperatureBuffer[7];
         char setpointBuffer[7];
 
-        String currentMode =  getThermostatModeAsString(_currentThermostatStatus->ThermostatMode);
+        String currentMode = ConvertersToString::getThermostatModeAsString(_currentThermostatStatus->ThermostatMode);
 
         dtostrf(_currentThermostatStatus->CurrentTemperatureFahrenheit, 5, 2, temperatureBuffer);
         dtostrf(_currentThermostatStatus->CurrentSetpoint, 5, 2, setpointBuffer);
@@ -46,7 +47,7 @@ void TemperatureReporter::SendTemperatureReportEveryTimeout()
 
 std::string TemperatureReporter::SerializeReport()
 {
-    StaticJsonDocument<256> jsonDocument;
+    StaticJsonDocument<300> jsonDocument;
 
     std::stringstream temperatureStream;
     temperatureStream << std::fixed << std::setprecision(2) << _currentThermostatStatus->CurrentTemperatureFahrenheit;
@@ -61,8 +62,8 @@ std::string TemperatureReporter::SerializeReport()
 
     jsonDocument["Setpoint"] = _currentThermostatStatus->CurrentSetpoint;
 
-    jsonDocument["ThermostatMode"] = getThermostatModeAsString(_currentThermostatStatus->ThermostatMode);
-    jsonDocument["FanMode"] = getFanModeAsString(_currentThermostatStatus->FanMode);
+    jsonDocument["ThermostatMode"] = ConvertersToString::getThermostatModeAsString(_currentThermostatStatus->ThermostatMode);
+    jsonDocument["FanMode"] = ConvertersToString::getFanModeAsString(_currentThermostatStatus->FanMode);
 
     jsonDocument["CompressorDelayIfNegative"] = (long)((long)_currentThermostatStatus->CurrentSeconds - (long)_currentThermostatStatus->LastCompressorOffAtSeconds) - (long)_currentThermostatStatus->CurrentSettings.CompressorTimeoutSeconds;
     jsonDocument["CurrentSeconds"] = _currentThermostatStatus->CurrentSeconds;
@@ -72,47 +73,4 @@ std::string TemperatureReporter::SerializeReport()
     serializeJson(jsonDocument, outputJson);
 
     return outputJson;
-}
-
-String TemperatureReporter::getThermostatModeAsString(ThermostatModeStates thermostatMode)
-{
-    switch (thermostatMode)
-    {
-        case ModeUninitialized:
-            return "uninitialized";
-
-        case ModeOff:
-            return "off";
-
-        case ModeCooling:
-            return "cool";
-
-        case ModeMaintainingRange:
-            return "Maintaining Range";
-
-        case ModeHeating:
-            return "heat";
-    }
-
-    return "ERROR";
-}
-
-String TemperatureReporter::getFanModeAsString(FanStates fanMode)
-{
-    switch (fanMode)
-    {
-        case FanUninitialized:
-            return "Uninitialized";
-
-        case FanAlwaysOn:
-            return "Always On";
-
-        case FanOnAutomatically:
-            return "Automatic";
-
-        case FanAlwaysOff:
-            return "Always Off";
-    }
-
-    return "ERROR";
 }

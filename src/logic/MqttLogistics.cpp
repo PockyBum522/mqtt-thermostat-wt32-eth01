@@ -1,6 +1,7 @@
 #include <ETH.h>
 #include "secrets/SECRETS.h"
 #include "MqttLogistics.h"
+#include "ConvertersToString.h"
 
 MqttLogistics::MqttLogistics(CurrentThermostatStatus *currentThermostatStatus,
                              WiFiClient *client)
@@ -50,6 +51,7 @@ void MqttLogistics::onMqttMessageReceived(char* topic, uint8_t* payload, unsigne
         String modeUpdateConfirmation = "Updating mode: " + payloadStr;
         _mqttClient->publish(SECRETS::TOPIC_DEBUG_OUT, modeUpdateConfirmation.c_str(), false);
         setThermostatMode(payloadStr);
+        updateHomeAssistantWithNewValues();
     }
 
     if (topicStr.equalsIgnoreCase(SECRETS::TOPIC_SET_TEMPERATURE_INCOMING))
@@ -60,6 +62,8 @@ void MqttLogistics::onMqttMessageReceived(char* topic, uint8_t* payload, unsigne
             Serial.println("Saw command to set thermostat setpoint! Value: " + payloadStr);
 
             setThermostatSetpoint(payloadStr);
+
+            updateHomeAssistantWithNewValues();
         }
     }
 }
@@ -103,7 +107,7 @@ void MqttLogistics::setThermostatMode(const String &payloadStr)
 void MqttLogistics::reconnectMqttIfNotConnected()
 {
     // Loop until we're reconnected
-    while (!MqttLogistics::_mqttClient->connected())
+    while (!_mqttClient->connected())
     {
         Serial.print("Attempting MQTT connection to ");
         Serial.print(SECRETS::MQTT_SERVER);
@@ -119,22 +123,25 @@ void MqttLogistics::reconnectMqttIfNotConnected()
         String mqttId = "WT32_ETH01_HVAC_" + macTrimmed;
 
         // Attempt to connect
-        if (MqttLogistics::_mqttClient->connect(mqttId.c_str(), SECRETS::MQTT_USER, SECRETS::MQTT_PASSWORD))
+        if (_mqttClient->connect(mqttId.c_str(), SECRETS::MQTT_USER, SECRETS::MQTT_PASSWORD))
         {
             Serial.println("...connected");
 
             // Once connected, publish an announcement...
             String data = "Hello from " + mqttId + " at IPv4: " + ETH.localIP().toString() + " ETH Mac addr: " + ETH.macAddress();
-            MqttLogistics::_mqttClient->publish(SECRETS::TOPIC_GET_INFO_ALL, data.c_str());
+            _mqttClient->publish(SECRETS::TOPIC_GET_INFO_ALL, data.c_str());
 
             Serial.print("Device is up: ");
             Serial.println(data);
 
             // ... and resubscribe
-            MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_SET_TEMPERATURE_INCOMING);
-            MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_SET_MODE_INCOMING);
+            _mqttClient->subscribe(SECRETS::TOPIC_SET_TEMPERATURE_INCOMING);
+            _mqttClient->subscribe(SECRETS::TOPIC_SET_MODE_INCOMING);
 
-            MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_GET_INFO_ALL);
+            _mqttClient->subscribe(SECRETS::TOPIC_GET_INFO_ALL);
+
+            _mqttClient->publish(SECRETS::TOPIC_JUST_SETPOINT_PERIPHERAL_OUT, "71.00");
+            _mqttClient->publish(SECRETS::TOPIC_JUST_MODE_PERIPHERAL_OUT, "off");
         }
         else
         {
@@ -226,4 +233,16 @@ boolean MqttLogistics::isNumeric(String str) {
         return false;
     }
     return true;
+}
+
+void MqttLogistics::updateHomeAssistantWithNewValues()
+{
+    char setpointBuffer[7];
+
+    String currentMode =  ConvertersToString::getThermostatModeAsString(_currentThermostatStatus->ThermostatMode);
+
+    dtostrf(_currentThermostatStatus->CurrentSetpoint, 5, 2, setpointBuffer);
+
+    _mqttClient->publish(SECRETS::TOPIC_JUST_SETPOINT_PERIPHERAL_OUT, setpointBuffer);
+    _mqttClient->publish(SECRETS::TOPIC_JUST_MODE_PERIPHERAL_OUT, currentMode.c_str());
 }

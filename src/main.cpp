@@ -13,6 +13,7 @@
 #include "logic/ThermostatStateMachine.h"
 #include "../lib/ESPAsyncWebServer/src/ESPAsyncWebServer.h"
 #include "../lib/AsyncElegantOTA/src/AsyncElegantOTA.h"
+#include "logic/ConvertersToString.h"
 
 #define DEBUG_ETHERNET_WEBSERVER_PORT Serial
 
@@ -96,4 +97,14 @@ void setInitialSettingsAfterDelay()
     currentStatus.ThermostatMode = ModeCooling;
     currentStatus.FanMode = FanOnAutomatically;
     currentStatus.CurrentSetpoint = 71.0;
+
+    // Update HA with new values
+    char setpointBuffer[7];
+
+    String currentMode =  ConvertersToString::getThermostatModeAsString(currentStatus.ThermostatMode);
+
+    dtostrf(currentStatus.CurrentSetpoint, 5, 2, setpointBuffer);
+
+    mqttLogistics.publish(SECRETS::TOPIC_JUST_SETPOINT_PERIPHERAL_OUT, setpointBuffer);
+    mqttLogistics.publish(SECRETS::TOPIC_JUST_MODE_PERIPHERAL_OUT, currentMode.c_str());
 }

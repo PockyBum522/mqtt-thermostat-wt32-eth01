@@ -36,6 +36,8 @@ private:
     static String getIncomingTopicAsString(char *topic);
 
     boolean isNumeric(String str);
+
+    void updateHomeAssistantWithNewValues();
 };
 
 #endif //MQTT_THERMOSTAT_WT32_ETH01_MQTT_LOGISTICS_H
