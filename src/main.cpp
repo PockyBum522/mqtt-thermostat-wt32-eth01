@@ -1,11 +1,9 @@
 #include <Arduino.h>
 #include <WiFiClient.h>
-#include <WebServer_WT32_ETH01.h>         // https://github.com/khoih-prog/WebServer_WT32_ETH01/
-#include <ESPAsyncWebServer.h>            // https://github.com/me-no-dev/ESPAsyncWebServer
-#include <AsyncElegantOTA.h>              // https://github.com/ayushsharma82/AsyncElegantOTA
 #include "logic/Sht3xHandler.h"
 #include <Wire.h>
 #include <sstream>
+#include <ETH.h>
 #include "models/CurrentThermostatStatus/CurrentThermostatStatus.h"
 #include "logic/MqttLogistics.h"
 #include "models/PinDefinitions.h"
@@ -13,6 +11,8 @@
 #include "logic/TemperatureReporter.h"
 #include "logic/DebugMessageSender.h"
 #include "logic/ThermostatStateMachine.h"
+#include "../lib/ESPAsyncWebServer/src/ESPAsyncWebServer.h"
+#include "../lib/AsyncElegantOTA/src/AsyncElegantOTA.h"
 
 #define DEBUG_ETHERNET_WEBSERVER_PORT Serial
 
@@ -56,19 +56,10 @@ void setup()
 
     Serial.begin(115200);
 
-    Serial.print("\nStarting WT32_ETH01_Thermostat on " + String(ARDUINO_BOARD));
-    Serial.println(" with " + String(SHIELD_TYPE));
-    Serial.println(WEBSERVER_WT32_ETH01_VERSION);
+    ETH.begin(ETH_PHY_ADDR, ETH_PHY_POWER);
 
-    if (currentStatus.CurrentSettings.UseWiFiInsteadOfEthernetForTesting)
-    {
-        startWifi();
-        mqttLogistics = *new MqttLogistics(&currentStatus, reinterpret_cast<WiFiClient *>(&WiFi));
-    }
-    else
-    {
-        startEthernet();
-    }
+    // Static IP, leave without this line to get IP via DHCP
+    // ETH.config(myIP, myGW, mySN, myDNS);
 
     webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
     {
@@ -93,8 +84,8 @@ void loop()
     thermostatStateMachine.loop();
     hvacController.loopForQueuedCompressorHandling();
 
-    temperatureReportSender.SendTemperatureReportEveryTimeout();
-    debugMqttSender.SendMqttDebugMessagesEveryTimeout();
+    //temperatureReportSender.SendTemperatureReportEveryTimeout();
+    //debugMqttSender.SendMqttDebugMessagesEveryTimeout();
 
     setInitialSettingsAfterDelay(); // Fires once after 30 seconds to set sane settings after brownouts
 }
@@ -109,28 +100,4 @@ void setInitialSettingsAfterDelay()
     currentStatus.ThermostatMode = ModeCooling;
     currentStatus.FanMode = FanOnAutomatically;
     currentStatus.CurrentSetpoint = 71.0;
-}
-
-void startEthernet()
-{
-    ETH.begin(ETH_PHY_ADDR, ETH_PHY_POWER);
-
-    // Static IP, leave without this line to get IP via DHCP
-    // ETH.config(myIP, myGW, mySN, myDNS);
-}
-
-void startWifi()
-{
-    WiFi.mode(WIFI_STA); //Optional
-    WiFi.begin(SECRETS::WIFI_SSID, SECRETS::WIFI_PSK);
-    Serial.println("\nConnecting");
-
-    while(WiFi.status() != WL_CONNECTED){
-        Serial.print(".");
-        delay(100);
-    }
-
-    Serial.println("\nConnected to the WiFi network");
-    Serial.print("Local ESP32 IP: ");
-    Serial.println(WiFi.localIP());
 }

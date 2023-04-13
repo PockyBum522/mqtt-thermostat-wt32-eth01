@@ -110,18 +110,31 @@ void MqttLogistics::reconnectMqttIfNotConnected()
         Serial.print("Attempting MQTT connection to ");
         Serial.print(SECRETS::MQTT_SERVER);
 
+        // Get last 6 of mac address without ':'
+        String macTrimmed = ETH.macAddress().substring(9, 11) + ETH.macAddress().substring(12, 14) + ETH.macAddress().substring(15, 17);
+
+        Serial.print("Last 6 of mac: ");
+        Serial.println(macTrimmed);
+
+        Serial.println();
+
+        String mqttId = "WT32_ETH01_HVAC_" + macTrimmed;
+
         // Attempt to connect
-        if (MqttLogistics::_mqttClient->connect("WT32_ETH01_Thermostat", SECRETS::MQTT_USER, SECRETS::MQTT_PASSWORD))
+        if (MqttLogistics::_mqttClient->connect(mqttId.c_str(), SECRETS::MQTT_USER, SECRETS::MQTT_PASSWORD))
         {
             Serial.println("...connected");
 
             // Once connected, publish an announcement...
-            String data = "Hello from WT32_ETH01_Thermostat at IPv4: " + ETH.localIP().toString();
-          MqttLogistics::_mqttClient->publish(SECRETS::TOPIC_GET_INFO_ALL, data.c_str());
+            String data = "Hello from " + mqttId + " at IPv4: " + ETH.localIP().toString() + " ETH Mac addr: " + ETH.macAddress();
+            MqttLogistics::_mqttClient->publish(SECRETS::TOPIC_GET_INFO_ALL, data.c_str());
+
+            Serial.print("Device is up: ");
+            Serial.println(data);
 
             // ... and resubscribe
-          MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_CONTROLLER_COMMANDS);
-          MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_GET_INFO_ALL);
+            MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_CONTROLLER_COMMANDS);
+            MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_GET_INFO_ALL);
         }
         else
         {

@@ -19,8 +19,6 @@ public:
     const bool DebugModeOn = true;
     const bool UseMockTemperatureSensorData = false;
 
-    const bool UseWiFiInsteadOfEthernetForTesting = true;
-
 };
 
 
