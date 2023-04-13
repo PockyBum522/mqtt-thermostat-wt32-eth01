@@ -33,10 +33,6 @@ auto thermostatStateMachine = *new ThermostatStateMachine(&currentStatus, &hvacC
 
 void setInitialSettingsAfterDelay();
 
-void startWifi();
-
-void startEthernet();
-
 void setup()
 {
     pinMode(PIN_RELAY_01, OUTPUT);
@@ -84,8 +80,8 @@ void loop()
     thermostatStateMachine.loop();
     hvacController.loopForQueuedCompressorHandling();
 
-    //temperatureReportSender.SendTemperatureReportEveryTimeout();
-    //debugMqttSender.SendMqttDebugMessagesEveryTimeout();
+    temperatureReportSender.SendTemperatureReportEveryTimeout();
+    debugMqttSender.SendMqttDebugMessagesEveryTimeout();
 
     setInitialSettingsAfterDelay(); // Fires once after 30 seconds to set sane settings after brownouts
 }

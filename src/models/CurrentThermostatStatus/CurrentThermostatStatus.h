@@ -22,9 +22,9 @@ public:
 
     bool CompressorQueuedToTurnOn = false;
 
-    float CurrentTemperatureFahrenheit = 0.0;
-    float CurrentHumidity = 0.0;
-    float CurrentSetpoint = 0.0; // Default to something comfortable in case of brownout
+    double CurrentTemperatureFahrenheit = 0.0;
+    double CurrentHumidity = 0.0;
+    double CurrentSetpoint = 0.0; // Default to something comfortable in case of brownout
 
 };
 

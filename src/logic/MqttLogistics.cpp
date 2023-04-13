@@ -28,8 +28,11 @@ void MqttLogistics::onMqttMessageReceived(char* topic, uint8_t* payload, unsigne
         String topicMessage = String("Topic was: ") + topicStr;
         String payloadMessage = String("Payload was: ") + payloadStr;
 
-        _mqttClient->publish(topicMessage.c_str(), payload, false);
-        _mqttClient->publish(payloadMessage.c_str(), payload, false);
+        Serial.println(topicMessage);
+        Serial.println(payloadMessage);
+
+        _mqttClient->publish(SECRETS::TOPIC_DEBUG_OUT, topicMessage.c_str(), false);
+        _mqttClient->publish(SECRETS::TOPIC_DEBUG_OUT, payloadMessage.c_str(), false);
     }
 
     // Handle getInfoAllNodes request
@@ -54,19 +57,17 @@ void MqttLogistics::onMqttMessageReceived(char* topic, uint8_t* payload, unsigne
     {
         // Change thermostat setpoint
         if (isNumeric(payloadStr))
-            setThermostatSetpoint(payloadStr);
-    }
+        {
+            Serial.println("Saw command to set thermostat setpoint! Value: " + payloadStr);
 
+            setThermostatSetpoint(payloadStr);
+        }
+    }
 }
 
 void MqttLogistics::setThermostatSetpoint(String commandString)
 {
-    std::string setpointString;
-
-    for (int i = 13; i < commandString.length(); i++)
-        setpointString += commandString[i];
-
-    float setpointFloat = std::stof(setpointString);
+    double setpointFloat = std::stod(commandString.c_str());
 
     _currentThermostatStatus->CurrentSetpoint = setpointFloat;
 }
@@ -134,6 +135,7 @@ void MqttLogistics::reconnectMqttIfNotConnected()
 
             // ... and resubscribe
             MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_CONTROLLER_COMMANDS);
+            MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_SET_TEMPERATURE_INCOMING);
             MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_GET_INFO_ALL);
         }
         else
