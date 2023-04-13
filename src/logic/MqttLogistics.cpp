@@ -45,11 +45,10 @@ void MqttLogistics::onMqttMessageReceived(char* topic, uint8_t* payload, unsigne
     }
 
     // If message isn't coming in on the commands topic, we don't care
-    if (topicStr.equalsIgnoreCase(SECRETS::TOPIC_CONTROLLER_COMMANDS))
+    if (topicStr.equalsIgnoreCase(SECRETS::TOPIC_SET_MODE_INCOMING))
     {
-        // Change thermostat mode
-        if (!payloadStr.startsWith("SET_MODE_")) return;
-
+        String modeUpdateConfirmation = "Updating mode: " + payloadStr;
+        _mqttClient->publish(SECRETS::TOPIC_DEBUG_OUT, modeUpdateConfirmation.c_str(), false);
         setThermostatMode(payloadStr);
     }
 
@@ -76,27 +75,25 @@ void MqttLogistics::setThermostatMode(const String &payloadStr)
 {
     _lastCommand = payloadStr.c_str();
 
-    if (payloadStr.endsWith("COOL"))
+    if (payloadStr.equalsIgnoreCase("cool"))
     {
         _currentThermostatStatus->ThermostatMode = ModeCooling;
+        _currentThermostatStatus->FanMode = FanOnAutomatically;
     }
-    else if (payloadStr.endsWith("MAINTAIN"))
+    else if (payloadStr.equalsIgnoreCase("MAINTAIN"))
     {
         _currentThermostatStatus->ThermostatMode = ModeMaintainingRange;
     }
-    else if (payloadStr.endsWith("NORMAL_HEAT"))
+    else if (payloadStr.equalsIgnoreCase("heat"))
     {
         _currentThermostatStatus->ThermostatMode = ModeHeating;
+        _currentThermostatStatus->FanMode = FanOnAutomatically;
     }
-    else if (payloadStr.endsWith("FAN_ONLY_ON"))
+    else if (payloadStr.equalsIgnoreCase("fan_only"))
     {
         _currentThermostatStatus->FanMode = FanAlwaysOn;
     }
-    else if (payloadStr.endsWith("FAN_AUTO_ON"))
-    {
-        _currentThermostatStatus->FanMode = FanOnAutomatically;
-    }
-    else if (payloadStr.endsWith("OFF"))
+    else if (payloadStr.equalsIgnoreCase("OFF"))
     {
         _currentThermostatStatus->ThermostatMode = ModeOff;
         _currentThermostatStatus->FanMode = FanOnAutomatically;
@@ -134,8 +131,9 @@ void MqttLogistics::reconnectMqttIfNotConnected()
             Serial.println(data);
 
             // ... and resubscribe
-            MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_CONTROLLER_COMMANDS);
             MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_SET_TEMPERATURE_INCOMING);
+            MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_SET_MODE_INCOMING);
+
             MqttLogistics::_mqttClient->subscribe(SECRETS::TOPIC_GET_INFO_ALL);
         }
         else

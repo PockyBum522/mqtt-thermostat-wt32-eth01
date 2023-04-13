@@ -12,6 +12,9 @@ DebugMessageSender::DebugMessageSender(CurrentThermostatStatus* currentThermosta
 
 void DebugMessageSender::SendMqttDebugMessagesEveryTimeout()
 {
+    if (!_currentThermostatStatus->CurrentSettings.DebugModeOn)
+        return;
+
     unsigned long secondsSinceLastDebugMessageSent = DebugMessageSender::_currentThermostatStatus->CurrentSeconds - _lastDebugOutMessageSentSeconds;
 
     if (secondsSinceLastDebugMessageSent > DebugMessageSender::_currentThermostatStatus->CurrentSettings.DebugMessageSendIntervalSeconds)

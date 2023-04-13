@@ -18,8 +18,7 @@ void HvacController::loopForQueuedCompressorHandling()
 
     if (secondsUntilCompressorOn > 0)
     {
-        _mqttLogistics->publish(SECRETS::TOPIC_DEBUG_STATE_MACHINE,
-        "HvacController - Queued Compressor turn-on now firing");
+         _mqttLogistics->publish(SECRETS::TOPIC_JUST_ACTIONS_PERIPHERAL_OUT, "cooling");
 
         _currentThermostatStatus->CompressorQueuedToTurnOn = false;
         digitalWrite(PIN_YELLOW_COMPRESSOR_CALL, STATE_ON);
@@ -28,8 +27,7 @@ void HvacController::loopForQueuedCompressorHandling()
 
 void HvacController::allOff()
 {
-    _mqttLogistics->publish(SECRETS::TOPIC_DEBUG_STATE_MACHINE,
-"HvacController::allOff() called");
+    _mqttLogistics->publish(SECRETS::TOPIC_JUST_ACTIONS_PERIPHERAL_OUT, "off");
 
     setCompressorState(STATE_OFF);
     setFanState(STATE_OFF);
@@ -38,9 +36,6 @@ void HvacController::allOff()
 
 void HvacController::allOffFanModeRespected()
 {
-    _mqttLogistics->publish(SECRETS::TOPIC_DEBUG_STATE_MACHINE,
-"HvacController::allOffFanModeRespected() called");
-
     setCompressorState(STATE_OFF);
     setReverserValveState(STATE_OFF);
 
@@ -62,9 +57,6 @@ void HvacController::allOffFanModeRespected()
 
 void HvacController::startCooling()
 {
-    _mqttLogistics->publish(SECRETS::TOPIC_DEBUG_STATE_MACHINE,
-"HvacController::startCooling() called");
-
     setReverserValveState(STATE_ON);
     setFanState(STATE_ON);
     setCompressorState(STATE_ON);
@@ -72,8 +64,7 @@ void HvacController::startCooling()
 
 void HvacController::startHeating()
 {
-    _mqttLogistics->publish(SECRETS::TOPIC_DEBUG_STATE_MACHINE,
-"HvacController::startHeating() called");
+    _mqttLogistics->publish(SECRETS::TOPIC_JUST_ACTIONS_PERIPHERAL_OUT, "heating");
 
     setReverserValveState(STATE_OFF);
     setFanState(STATE_ON);
@@ -82,8 +73,7 @@ void HvacController::startHeating()
 
 void HvacController::turnOffAllButFan()
 {
-    _mqttLogistics->publish(SECRETS::TOPIC_DEBUG_STATE_MACHINE,
-"HvacController::turnOffAllButFan() called");
+    _mqttLogistics->publish(SECRETS::TOPIC_JUST_ACTIONS_PERIPHERAL_OUT, "idle");
 
     setReverserValveState(STATE_OFF);
     setCompressorState(STATE_OFF);
@@ -93,9 +83,6 @@ void HvacController::turnOffAllButFan()
 
 void HvacController::setCompressorState(bool newState)
 {
-    _mqttLogistics->publish(SECRETS::TOPIC_DEBUG_STATE_MACHINE,
-    "HvacController::setCompressorState() called");
-
     if (!newState)
     {
         _currentThermostatStatus->CompressorQueuedToTurnOn = true;
@@ -109,14 +96,12 @@ void HvacController::setCompressorState(bool newState)
     if (!digitalRead(PIN_YELLOW_COMPRESSOR_CALL))
         _currentThermostatStatus->LastCompressorOffAtSeconds = _currentThermostatStatus->CurrentSeconds;
 
+    _mqttLogistics->publish(SECRETS::TOPIC_JUST_ACTIONS_PERIPHERAL_OUT, "idle");
     digitalWrite(PIN_YELLOW_COMPRESSOR_CALL, STATE_OFF);
 }
 
 void HvacController::setReverserValveState(bool newState)
 {
-    _mqttLogistics->publish(SECRETS::TOPIC_DEBUG_STATE_MACHINE,
-"HvacController::setReverserValveState() called");
-
     if (!newState)
         digitalWrite(PIN_ORANGE_REVERSER_VALVE, STATE_ON);
     else
@@ -126,12 +111,12 @@ void HvacController::setReverserValveState(bool newState)
 
 void HvacController::setFanState(bool newState)
 {
-    _mqttLogistics->publish(SECRETS::TOPIC_DEBUG_STATE_MACHINE,
-"HvacController::setFanState() called");
-
     if (!newState)
+    {
         digitalWrite(PIN_GREEN_FAN_CALL, STATE_ON);
+    }
     else
+    {
         digitalWrite(PIN_GREEN_FAN_CALL, STATE_OFF);
-
+    }
 }

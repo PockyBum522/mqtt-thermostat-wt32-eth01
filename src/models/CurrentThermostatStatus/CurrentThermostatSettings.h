@@ -10,13 +10,13 @@ class CurrentThermostatSettings
 {
 public:
     const int CompressorTimeoutSeconds = 900;
-    const int DebugMessageSendIntervalSeconds = 3;
-    const int TemperatureReportMessageSendIntervalSeconds = 5;
+    const int DebugMessageSendIntervalSeconds = 10;
+    const int TemperatureReportMessageSendIntervalSeconds = 10;
 
     // How far to overshoot the setpoint/let the temp get back to when the house returns and goes past setpoint the other direction
     const float MarginFahrenheit = 0.75;
 
-    const bool DebugModeOn = true;
+    const bool DebugModeOn = false;
     const bool UseMockTemperatureSensorData = false;
 
 };

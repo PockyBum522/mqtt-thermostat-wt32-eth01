@@ -25,6 +25,11 @@ public:
 
     static const char *WIFI_SSID;
     static const char *WIFI_PSK;
+    static const char *TOPIC_JUST_TEMPERATURE_PERIPHERAL_OUT;
+    static const char *TOPIC_JUST_SETPOINT_PERIPHERAL_OUT;
+    static const char *TOPIC_JUST_ACTIONS_PERIPHERAL_OUT;
+    static const char *TOPIC_SET_MODE_INCOMING;
+    static const char *TOPIC_JUST_MODE_PERIPHERAL_OUT;
 };
 
 
