@@ -3,7 +3,6 @@
 #include "TemperatureReporter.h"
 #include "MqttLogistics.h"
 #include "secrets/SECRETS.h"
-#include "../../lib/ArduinoJson-6.x/src/ArduinoJson/Document/StaticJsonDocument.hpp"
 #include "ConvertersToString.h"
 
 TemperatureReporter::TemperatureReporter(CurrentThermostatStatus* currentThermostatStatus,

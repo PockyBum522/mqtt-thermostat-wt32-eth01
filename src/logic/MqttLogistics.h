@@ -1,10 +1,9 @@
-
 #ifndef MQTT_THERMOSTAT_WT32_ETH01_MQTT_LOGISTICS_H
 #define MQTT_THERMOSTAT_WT32_ETH01_MQTT_LOGISTICS_H
 
 #include <WiFiClient.h>
+#include <PubSubClient.h>
 #include "models/CurrentThermostatStatus/CurrentThermostatStatus.h"
-#include "../../lib/PubSubClient/src/PubSubClient.h"
 
 class MqttLogistics
 {

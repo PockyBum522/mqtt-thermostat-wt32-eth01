@@ -1,18 +1,17 @@
 #include <Arduino.h>
 #include <WiFiClient.h>
-#include "logic/Sht3xHandler.h"
 #include <Wire.h>
 #include <sstream>
 #include <ETH.h>
+#include <AsyncElegantOTA.h>
 #include "models/CurrentThermostatStatus/CurrentThermostatStatus.h"
-#include "logic/MqttLogistics.h"
 #include "models/PinDefinitions.h"
 #include "secrets/SECRETS.h"
+#include "logic/MqttLogistics.h"
+#include "logic/Sht3xHandler.h"
 #include "logic/TemperatureReporter.h"
 #include "logic/DebugMessageSender.h"
 #include "logic/ThermostatStateMachine.h"
-#include "../lib/ESPAsyncWebServer/src/ESPAsyncWebServer.h"
-#include "../lib/AsyncElegantOTA/src/AsyncElegantOTA.h"
 #include "logic/ConvertersToString.h"
 
 #define DEBUG_ETHERNET_WEBSERVER_PORT Serial
