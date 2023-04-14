@@ -1,9 +1,18 @@
 # mqtt-thermostat-wt32-eth01
 Making my own thermostat from scratch with a ESP32
 
-# Wiring:
+# Status/Features
 
-## SHT30:
+* Basic control and reporting to and from home assistant over MQTT - Working!
+* Cooling - Working!
+* Heating - Working!
+* ElegantOTA for updates over ethernet - Working!
+* Restore preset settings shortly after startup in case of brownout - Working!
+* Automatic mode to stay in a set range with both heating and cooling - Not yet.
+
+# Wiring
+
+## SHT30
 
 | SHT30 PIN | Wire Color | ESP8266 Pin | ESP32 Pin | 4-pin Header Pin Number |
 |-----------|------------|-------------|-----------|-------------------------|
@@ -12,7 +21,7 @@ Making my own thermostat from scratch with a ESP32
 | SCL       | Yellow     | D1          | IO 22     | 03                      |
 | SDA       | White      | D2          | IO 21     | 04                      |
 
-## Relays:
+## Relays
 
 | Relay Preprocessor Directive Name | ESP32 GPIO | WT32_ETH01 Pin Silkscreen Label | HVAC Function/Preprocessor Directive |
 |-----------------------------------|------------|---------------------------------|--------------------------------------|
