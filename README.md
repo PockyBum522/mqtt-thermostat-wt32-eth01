@@ -1,5 +1,10 @@
 # mqtt-thermostat-wt32-eth01
-Making my own thermostat from scratch with a ESP32
+Making my own thermostat from scratch with a ESP32 to drive my heat-pump based central air
+
+Parts:
+* WT32-ETH01 ESP32/Ethernet combination board
+* 8 channel relay board
+* SHT30 I2c Temperature Sensor
 
 # Status/Features
 
