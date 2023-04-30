@@ -21,7 +21,7 @@ Parts:
 
 | SHT30 PIN | Wire Color | ESP8266 Pin | ESP32 Pin | 4-pin Header Pin Number |
 |-----------|------------|-------------|-----------|-------------------------|
-| Ground    | Green      | Ground      | Ground    | 01                      |
+| Ground    | Black      | Ground      | Ground    | 01                      |
 | VIN       | Red        | 3.3v        | 3.3v      | 02                      |
 | SCL       | Yellow     | D1          | IO 22     | 03                      |
 | SDA       | White      | D2          | IO 21     | 04                      |
