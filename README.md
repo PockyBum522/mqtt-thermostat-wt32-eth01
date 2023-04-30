@@ -26,6 +26,9 @@ Parts:
 | SCL       | Yellow     | D1          | IO 22     | 03                      |
 | SDA       | White      | D2          | IO 21     | 04                      |
 
+#define PIN_SCL 17 // TXD (Blue at 4 pin header)
+#define PIN_SDA 32 // CFG (Green at 4 pin header)
+
 ## Relays
 
 | Relay Preprocessor Directive Name | ESP32 GPIO | WT32_ETH01 Pin Silkscreen Label | HVAC Function/Preprocessor Directive |
