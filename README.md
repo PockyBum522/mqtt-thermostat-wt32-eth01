@@ -19,15 +19,12 @@ Parts:
 
 ## SHT30
 
-| SHT30 PIN | Wire Color | ESP8266 Pin | ESP32 Pin | 4-pin Header Pin Number |
-|-----------|------------|-------------|-----------|-------------------------|
-| Ground    | Black      | Ground      | Ground    | 01                      |
-| VIN       | Red        | 3.3v        | 3.3v      | 02                      |
-| SCL       | Yellow     | D1          | IO 22     | 03                      |
-| SDA       | White      | D2          | IO 21     | 04                      |
-
-#define PIN_SCL 17 // TXD (Blue at 4 pin header)
-#define PIN_SDA 32 // CFG (Green at 4 pin header)
+| SHT30 PIN | Wire Color | ESP8266 Pin | ESP32 Pin | WT32-ETH01 Pin | WT32-ETH01 Pin Screen-printed Label | 4-pin Header Pin Number |
+|-----------|------------|-------------|-----------|----------------|-------------------------------------|-------------------------|
+| Ground    | Black      | Ground      | Ground    | GND            | GND                                 | 01                      |
+| VIN       | Red        | 3.3v        | 3.3v      | 3v3            | 3V3                                 | 02                      |
+| SCL       | Yellow     | D1          | IO 22     | IO 17          | TXD                                 | 03                      |
+| SDA       | White      | D2          | IO 21     | IO 32          | CFG                                 | 04                      |
 
 ## Relays
 
