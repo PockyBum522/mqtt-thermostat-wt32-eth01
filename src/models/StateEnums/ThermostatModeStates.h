@@ -8,7 +8,8 @@ enum ThermostatModeStates
     ModeOff,
     ModeCooling,
     ModeMaintainingRange,
-    ModeHeating
+    ModeHeating,
+    ModeFanOnly
 };
 
 

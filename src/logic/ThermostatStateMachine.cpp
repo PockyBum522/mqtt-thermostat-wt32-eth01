@@ -42,7 +42,7 @@ void ThermostatStateMachine::observedTempAboveSetpointMargin()
         _thermostatModeState != _lastThermostatModeState)
     {
         _mqttLogistics->publish(SECRETS::TOPIC_DEBUG_STATE_MACHINE,
-    "State machine transition firing: Inside Setpoint Margin -> Above Setpoint Margin");
+                    "State machine transition firing: Inside Setpoint Margin -> Above Setpoint Margin");
 
         switch (_currentThermostatStatus->ThermostatMode)
         {
@@ -85,7 +85,7 @@ void ThermostatStateMachine::observedTempBelowSetpointMargin()
         _thermostatModeState != _lastThermostatModeState)
     {
         _mqttLogistics->publish(SECRETS::TOPIC_DEBUG_STATE_MACHINE,
-    "State machine transition firing: Inside Setpoint Margin -> Below Setpoint Margin");
+                    "State machine transition firing: Inside Setpoint Margin -> Below Setpoint Margin");
 
         switch (_currentThermostatStatus->ThermostatMode)
         {
